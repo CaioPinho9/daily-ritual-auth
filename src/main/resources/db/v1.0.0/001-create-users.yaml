@@ -1,0 +1,56 @@
+databaseChangeLog:
+  - changeSet:
+      id: auth-001-create-users
+      author: caiopinho
+      changes:
+        - createTable:
+            tableName: tb_users
+            columns:
+              - column:
+                  name: co_seq_user
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+                    
+              - column:
+                  name: no_name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: no_email
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: no_password_hash
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: st_active
+                  type: boolean
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: dt_created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: dt_updated_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+        - addUniqueConstraint:
+            tableName: tb_users
+            columnNames: no_email
+            constraintName: uq_users_email

@@ -1,0 +1,58 @@
+databaseChangeLog:
+  - changeSet:
+      id: auth-002-create-refresh-tokens
+      author: caiopinho
+      changes:
+        - createTable:
+            tableName: tb_refresh_tokens
+            columns:
+              - column:
+                  name: co_seq_refresh_token
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: co_user
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: no_token_hash
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: dt_expires_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: dt_revoked_at
+                  type: timestamp
+              - column:
+                  name: dt_created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+        
+        - addForeignKeyConstraint:
+            baseTableName: tb_refresh_tokens
+            baseColumnNames: co_user
+            referencedTableName: tb_users
+            referencedColumnNames: co_seq_user
+            constraintName: fk_refresh_tokens_user
+        
+        - createIndex:
+            tableName: tb_refresh_tokens
+            indexName: idx_refresh_tokens_user
+            columns:
+              - column:
+                  name: co_user
+        
+        - createIndex:
+            tableName: tb_refresh_tokens
+            indexName: idx_refresh_tokens_token_hash
+            columns:
+              - column:
+                  name: no_token_hash

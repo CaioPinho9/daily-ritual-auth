@@ -10,6 +10,7 @@ services:
       - "5432:5432"
     volumes:
       - study_tracker_db_data:/var/lib/postgresql/data
+      - ./docker/init:/docker-entrypoint-initdb.d
 
 volumes:
   study_tracker_db_data:

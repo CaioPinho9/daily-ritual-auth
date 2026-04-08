@@ -37,7 +37,8 @@ public class SecurityConfig {
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.authorizeHttpRequests(authorize -> authorize
 						.requestMatchers("/users/signup", "/auth/login", "/auth/refresh", "/auth/logout").permitAll()
-						.requestMatchers("/actuator/health").permitAll()
+						.requestMatchers("/admin/**").hasRole("ADMIN")
+						.requestMatchers("/health").permitAll()
 						.anyRequest().authenticated())
 				.exceptionHandling(exception -> exception.authenticationEntryPoint(
 						(request, response, authException) -> response.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
@@ -51,7 +52,7 @@ public class SecurityConfig {
 			@Value("${app.cors.allowed-origin:http://localhost:5173}") String allowedOrigin) {
 		CorsConfiguration configuration = new CorsConfiguration();
 		configuration.setAllowedOrigins(List.of(allowedOrigin));
-		configuration.setAllowedMethods(List.of("GET", "POST", "OPTIONS"));
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 		configuration.setAllowCredentials(true);
 		configuration.setMaxAge(3600L);

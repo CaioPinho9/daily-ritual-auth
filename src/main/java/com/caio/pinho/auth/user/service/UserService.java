@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import com.caio.pinho.auth.user.dto.UserCreateRequest;
 import com.caio.pinho.auth.user.dto.UserResponse;
 import com.caio.pinho.auth.user.exception.EmailAlreadyExistsException;
+import com.caio.pinho.auth.user.exception.UserNotFoundException;
 import com.caio.pinho.auth.user.model.User;
 import com.caio.pinho.auth.user.repository.UserRepository;
 
@@ -44,5 +45,13 @@ public class UserService {
 
 	public UserResponse me(User user) {
 		return new UserResponse(user.getId(), user.getName(), user.getEmail());
+	}
+
+	public void disable(Long id) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new UserNotFoundException(id));
+		user.setActive(false);
+		user.setUpdatedAt(LocalDateTime.now());
+		userRepository.save(user);
 	}
 }

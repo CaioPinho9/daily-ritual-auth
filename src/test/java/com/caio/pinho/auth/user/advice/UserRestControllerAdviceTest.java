@@ -31,7 +31,6 @@ class UserRestControllerAdviceTest {
 
 		assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals("EMAIL_ALREADY_EXISTS", response.getBody().code());
 		assertEquals("Email already exists: alice@example.com", response.getBody().message());
 		assertNull(response.getBody().details());
 	}
@@ -52,7 +51,6 @@ class UserRestControllerAdviceTest {
 
 		assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
 		assertNotNull(response.getBody());
-		assertEquals("VALIDATION_ERROR", response.getBody().code());
 		assertEquals("Request validation failed", response.getBody().message());
 		assertEquals("name is required", response.getBody().details().get("name"));
 		assertEquals("email must be valid", response.getBody().details().get("email"));

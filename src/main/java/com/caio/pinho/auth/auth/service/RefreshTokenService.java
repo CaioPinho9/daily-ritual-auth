@@ -53,17 +53,26 @@ public class RefreshTokenService {
 	}
 
 	@Transactional(readOnly = true)
-	public Optional<User> validateAndGetUser(String rawToken) {
+	public RefreshTokenValidationResult validate(String rawToken) {
 		if (rawToken == null || rawToken.isBlank()) {
-			return Optional.empty();
+			return RefreshTokenValidationResult.invalidResult();
 		}
 
 		LocalDateTime now = LocalDateTime.now(clock);
-		return refreshTokenRepository.findByTokenHash(hash(rawToken))
-				.filter(refreshToken -> refreshToken.getRevokedAt() == null)
-				.filter(refreshToken -> refreshToken.getExpiresAt().isAfter(now))
-				.map(RefreshToken::getUser)
-				.filter(user -> Boolean.TRUE.equals(user.getActive()));
+		Optional<RefreshToken> refreshToken = refreshTokenRepository.findByTokenHash(hash(rawToken))
+				.filter(foundToken -> foundToken.getRevokedAt() == null)
+				.filter(foundToken -> foundToken.getExpiresAt().isAfter(now));
+
+		if (refreshToken.isEmpty()) {
+			return RefreshTokenValidationResult.invalidResult();
+		}
+
+		User user = refreshToken.get().getUser();
+		if (!Boolean.TRUE.equals(user.getActive())) {
+			return RefreshTokenValidationResult.disabledResult();
+		}
+
+		return RefreshTokenValidationResult.validResult(user);
 	}
 
 	@Transactional
@@ -96,5 +105,20 @@ public class RefreshTokenService {
 		byte[] bytes = new byte[32];
 		secureRandom.nextBytes(bytes);
 		return BASE64_URL_ENCODER.encodeToString(bytes);
+	}
+
+	public record RefreshTokenValidationResult(Optional<User> user, boolean disabled) {
+
+		static RefreshTokenValidationResult validResult(User user) {
+			return new RefreshTokenValidationResult(Optional.of(user), false);
+		}
+
+		static RefreshTokenValidationResult invalidResult() {
+			return new RefreshTokenValidationResult(Optional.empty(), false);
+		}
+
+		static RefreshTokenValidationResult disabledResult() {
+			return new RefreshTokenValidationResult(Optional.empty(), true);
+		}
 	}
 }

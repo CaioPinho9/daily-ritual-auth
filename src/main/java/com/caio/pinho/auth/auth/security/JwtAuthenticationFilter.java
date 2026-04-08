@@ -2,13 +2,16 @@ package com.caio.pinho.auth.auth.security;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,10 +23,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final JwtService jwtService;
 	private final UserRepository userRepository;
+	private final List<String> adminEmails;
 
-	public JwtAuthenticationFilter(JwtService jwtService, UserRepository userRepository) {
+	public JwtAuthenticationFilter(
+			JwtService jwtService,
+			UserRepository userRepository,
+			@Value("${auth.admin.emails:}") List<String> adminEmails) {
 		this.jwtService = jwtService;
 		this.userRepository = userRepository;
+		this.adminEmails = adminEmails.stream()
+				.map(String::trim)
+				.filter(value -> !value.isBlank())
+				.toList();
 	}
 
 	@Override
@@ -36,8 +47,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 					.flatMap(claims -> userRepository.findById(Long.parseLong(claims.subject())))
 					.filter(user -> Boolean.TRUE.equals(user.getActive()))
 					.ifPresent(user -> {
+						List<SimpleGrantedAuthority> authorities = adminEmails.contains(user.getEmail())
+								? List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+								: Collections.emptyList();
 						UsernamePasswordAuthenticationToken authentication =
-								new UsernamePasswordAuthenticationToken(user, token, Collections.emptyList());
+								new UsernamePasswordAuthenticationToken(user, token, authorities);
 						SecurityContextHolder.getContext().setAuthentication(authentication);
 					});
 		}

@@ -10,6 +10,7 @@ import com.caio.pinho.auth.auth.dto.AuthTokens;
 import com.caio.pinho.auth.auth.dto.LoginRequest;
 import com.caio.pinho.auth.auth.exception.InvalidCredentialsException;
 import com.caio.pinho.auth.auth.exception.InvalidRefreshTokenException;
+import com.caio.pinho.auth.auth.exception.UserDisabledException;
 import com.caio.pinho.auth.auth.security.JwtService;
 import com.caio.pinho.auth.user.model.User;
 import com.caio.pinho.auth.user.repository.UserRepository;
@@ -36,9 +37,13 @@ public class AuthService {
 	@Transactional
 	public AuthTokens login(LoginRequest loginRequest) {
 		User user = userRepository.findByEmail(loginRequest.email())
-				.filter(foundUser -> Boolean.TRUE.equals(foundUser.getActive()))
-				.filter(foundUser -> passwordEncoder.matches(loginRequest.password(), foundUser.getPasswordHash()))
 				.orElseThrow(InvalidCredentialsException::new);
+		if (!Boolean.TRUE.equals(user.getActive())) {
+			throw new UserDisabledException();
+		}
+		if (!passwordEncoder.matches(loginRequest.password(), user.getPasswordHash())) {
+			throw new InvalidCredentialsException();
+		}
 
 		String accessToken = jwtService.generateAccessToken(user);
 		String refreshToken = refreshTokenService.createRefreshToken(user);
@@ -47,8 +52,12 @@ public class AuthService {
 
 	@Transactional(readOnly = true)
 	public AccessTokenResponse refresh(String rawRefreshToken) {
-		User user = refreshTokenService.validateAndGetUser(rawRefreshToken)
-				.orElseThrow(InvalidRefreshTokenException::new);
+		RefreshTokenService.RefreshTokenValidationResult validationResult = refreshTokenService.validate(rawRefreshToken);
+		if (validationResult.disabled()) {
+			throw new UserDisabledException();
+		}
+
+		User user = validationResult.user().orElseThrow(InvalidRefreshTokenException::new);
 		return new AccessTokenResponse(jwtService.generateAccessToken(user));
 	}
 

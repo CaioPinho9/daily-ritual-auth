@@ -1,5 +1,7 @@
  databaseChangeLog:
   - include:
+      file: db/v1.0.0/000-create-schema.yaml
+  - include:
       file: db/v1.0.0/001-create-users.yaml
   - include:
       file: db/v1.0.0/002-refresh-tokens.yaml

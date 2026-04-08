@@ -53,8 +53,9 @@ class RefreshTokenServiceTest {
 
 		assertNotEquals(rawToken, savedToken.getTokenHash());
 		assertEquals(user.getId(), savedToken.getUser().getId());
-		assertTrue(refreshTokenService.validateAndGetUser(rawToken).isPresent());
-		assertEquals(user.getId(), refreshTokenService.validateAndGetUser(rawToken).orElseThrow().getId());
+		RefreshTokenService.RefreshTokenValidationResult validationResult = refreshTokenService.validate(rawToken);
+		assertTrue(validationResult.user().isPresent());
+		assertEquals(user.getId(), validationResult.user().orElseThrow().getId());
 	}
 
 	@TestConfiguration
